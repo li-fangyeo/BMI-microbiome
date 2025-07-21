@@ -3,20 +3,24 @@ library(ggpubr)
 library(purrr)
 library(ggsignif)
 
-#Box plot for alpha 
-a<- tse %>% colData() %>% as.data.frame()
+
 
 #Categorise BMI
 colData(tse)$BMI_Category <- cut(colData(tse)$BMI,
                       breaks = c(-Inf, 18.5, 24.9, 29.9, 39.9, Inf),
-                      labels = c("Underweight", "Normal", "Overweight", "Obese", "Morbid Obesity"))
+                      labels = c("Underweight (n=40)", "Normal (n=2137)", 
+                                 "Overweight (n=2401)", "Obese (n=1202)", 
+                                 "Morbid Obesity (n=66)"))
 
-
+#Box plot for alpha 
+a<- tse %>% colData() %>% as.data.frame()
 
 a %>% as.data.frame %>% group_by(BMI_Category) %>%
   summarise(Count = n())
 a$BMI_Category <- factor(a$BMI_Category, 
-                         levels = c("Underweight", "Normal", "Overweight", "Obese", "Morbid Obesity"))
+                         levels = c("Underweight (n=40)", "Normal (n=2137)", 
+                                    "Overweight (n=2401)", "Obese (n=1202)", 
+                                    "Morbid Obesity (n=66)"))
 # For significance testing, all different combinations are determined
 comb <- split(t(combn(levels(a$BMI_Category), 2)), 
               seq(nrow(t(combn(levels(a$BMI_Category), 2)))))
@@ -43,13 +47,19 @@ p<- ggplot(a, aes(x = BMI_Category, y = shannon)) +
   labs(
     x = "BMI category",
     y = "Shannon index",
-    fill = "BMI category")
-    
+    fill = "BMI category") +
+  theme(legend.position="none",
+        axis.text.x = element_text(angle = 45, hjust=1),
+        axis.title.x = element_blank(),
+        text = element_text(color = "black"))
+  
+
+p
 
 ggsave("alpha.pdf", 
        plot = p, 
        width = 8, 
-       height = 6, 
+       height = 7, 
        units = "in")
 
 library(DataExplorer)
