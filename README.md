@@ -9,11 +9,11 @@ Using eastern finland as discovery cohort, validating significant taxa in wester
 5) Predicted pathway analysis
 
 ## Getting started
-Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts. 
-Exposure variable: gut microbiota abundances
-Outcome variable: Obesity indicators (namely BMI, WHR)
-Covariate: diabetes, cardiovascular disease, smoking, alcohol consumption per week, healthy food choices, exercise
-Exclusion criteria: antibiotics use 1 month prior to stool collection, pregnant, metagenomic reads < 50,000
+- Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts. 
+- Exposure variable: gut microbiota abundances
+- Outcome variable: Obesity indicators (namely BMI, WHR)
+- Covariate: diabetes, cardiovascular disease, smoking, alcohol consumption per week, healthy food choices, exercise
+- Exclusion criteria: antibiotics use 1 month prior to stool collection, pregnant, metagenomic reads < 50,000
 
 ### Discovery cohort
 Eastern finland cohort, n = 3906
