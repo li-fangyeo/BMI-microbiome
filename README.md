@@ -1,12 +1,18 @@
 # Microbiome and obesity
-Cross sectional, association analysis between obesity indicators (BMI, waist circumferenec, and waist-hip ratio) and gut microbiome in FINRISK 2002.
-Part 1: Using eastern finland as discovery cohort, validating significant taxa in western finland.
-Part 2: Using two-sample Mendelian randomization to find causal taxa for obesity indicators
+Cross sectional, association analysis between obesity indicators (BMI and waist-hip ratio) and gut microbiome in FINRISK 2002. 
+Using eastern finland as discovery cohort, validating significant taxa in western finland.
+
+1) Alpha diversity
+2) Beta diversity
+3) Bacteroidota:Firmicutes ratio
+***split into discovery and validation cohort***
+4) Taxa differential abundance analysis
+5) Predicted pathway analysis
 
 ## Getting started
 Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts. 
 Exposure variable: gut microbiota abundances
-Outcome variable: Obesity indicators (namely BMI, waist cm, WHR)
+Outcome variable: Obesity indicators (namely BMI, WHR)
 Covariate: diabetes, cardiovascular disease, smoking, alcohol consumption per week, healthy food choices, exercise
 Exclusion criteria: antibiotics use 1 month prior to stool collection, pregnant, metagenomic reads < 50,000
 
@@ -30,7 +36,7 @@ No. of significant taxa after FDR correction:
 | BMI       | 164       | 132        |
 | Waist cm  | 159       | 120        |
 | WHR       | 149       | 105        |
+Note: Waist circumference was later removed from analysis because it did not add much insight.
 
-### Mendelian randomization
-Detailed steps can be found in the mendelian randomization page. Briefly, significant taxa validated in western finland cohort was used to establish putative causative links.
+
 
