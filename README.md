@@ -35,7 +35,8 @@ No. of significant taxa after FDR correction:
 | BMI       | 164       | 132        |
 | Waist cm  | 159       | 120        |
 | WHR       | 149       | 105        |
-Note: Waist circumference was later removed from analysis because it did not add much insight.
+
+-Note: Waist circumference was later removed from analysis because it did not add much insight.
 
 
 
