@@ -8,6 +8,13 @@ Using eastern finland as discovery cohort, validating significant taxa in wester
 4) Taxa differential abundance analysis
 5) Predicted pathway analysis
 
+## Code files
+1. MainAnalysis.rmd
+2. beta.rmd
+3. Functional.rmd
+4. BF_ratio.R
+5. Figures
+
 ## Getting started
 - Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts. 
 - Exposure variable: gut microbiota abundances
