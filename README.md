@@ -5,7 +5,6 @@ Using eastern finland as discovery cohort, validating significant taxa in wester
 1) Alpha diversity
 2) Beta diversity
 3) Bacteroidota:Firmicutes ratio
-***split into discovery and validation cohort***
 4) Taxa differential abundance analysis
 5) Predicted pathway analysis
 
