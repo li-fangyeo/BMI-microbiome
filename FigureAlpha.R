@@ -2,6 +2,7 @@ library(dplyr)
 library(ggpubr)
 library(purrr)
 library(ggsignif)
+library(mia)
 
 
 
@@ -34,11 +35,11 @@ pvals_adj <- p.adjust(pvals, method = "fdr")
 # Filter only significant comparisons
 significant_comparisons <- comb[pvals_adj < 0.05]
 
-my_colors <- c("#434247","#0A9396","#EE9800","#CA6702", "firebrick")
+my_colors <- c("#ffffff", "#c2c6cb", "#868c96", "#495362", "#0c192d")
 
 # Plot with only significant annotations
-p<- ggplot(a, aes(x = BMI_Category, y = shannon)) +
-  geom_violin(aes(fill = BMI_Category)) + 
+p<- ggplot(a, aes(x = BMI_Category, y = shannon, fill = BMI_Category)) +
+  geom_violin() + 
   geom_boxplot(width = 0.1, outlier.shape = NA) + 
   theme_classic(base_size = 16) +
   scale_fill_manual(values = my_colors) +

@@ -23,7 +23,7 @@ A<- ggplot(e, aes(x = factor(Pathway), y = estimate, fill = pathway2)) +
   theme(
     axis.text = element_blank(),
     axis.ticks = element_blank(),
-    panel.grid = element_blank(),
+    panel.grid.major.y = element_line(color = "lightgrey", linewidth = 0.2),
     axis.title = element_blank(),
     axis.line = element_blank(),
     legend.title = element_text(size = 14),
@@ -31,6 +31,7 @@ A<- ggplot(e, aes(x = factor(Pathway), y = estimate, fill = pathway2)) +
   ) +
   scale_fill_brewer(palette = "Spectral", name = "Pathway class")
 
+A
 ##Top 20 functional pathway dotplot
 et<- e %>% 
   arrange(qval_fdr) %>%
@@ -67,7 +68,7 @@ library(patchwork)
 nested <- (A / B) +
   plot_annotation(tag_levels = 'A')
 nested
-ggplot2::ggsave(filename = "nested.pdf", 
+ggplot2::ggsave(filename = "nested2.pdf", 
                 plot = nested,
                 #dpi = 300,
                 width = 18,

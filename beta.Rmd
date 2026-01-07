@@ -43,7 +43,7 @@ vars <- list(BL_AGE = "Age",
              CURR_SMOKE = "Smoking",
              ALKI2_FR02 = "Alcohol consumption per week (g)",
              HFC = "Healthy food choices",
-             Q57 = "Exercise",
+             Q57X = "Exercise",
              shannon = "Shannon diversity",
              observed = "Richness",
              EAST = "Eastern finland")
@@ -55,11 +55,11 @@ tse <- readRDS("../data/tse_mgs-20241118_104759.rds") %>%
   mia::addAlpha(assay.type = "counts", index = c("shannon", "observed"), name = c("shannon", "observed")) %>%
   tse_add_food_score(HFC) %>%
   #combine values into one
-  tse_mutate(Q57 = dplyr::if_else(Q57 %in% c(3, 4), 3, Q57)) %>%
+  tse_mutate(Q57X = dplyr::if_else(Q57X %in% c(3, 4), 3, Q57X)) %>%
   tse_mutate(dplyr::across(c(MEN,
                              CURR_SMOKE,
                              EAST,
-                             Q57,
+                             Q57X,
                              dplyr::contains("INCIDENT"),
                              dplyr::contains("PREVAL")), as.factor)) %>% 
   #pregnant
@@ -85,14 +85,18 @@ Calculate RDA using Bray-curtis at the species level with only age and sex covar
 ```{r}
 tse <- tse %>%  mia::agglomerateByRank(rank = "Species") %>% 
   mia::transformAssay(method = "relabundance") %>%
-  mia::runRDA(FUN = getDissimilarity,
-                 assay.type = "relabundance",
+  mia::getPERMANOVA(assay.type = "relabundance",
                  method = "bray",
                  na.action = na.exclude,
                  formula = assay ~ BL_AGE + MEN + PREVAL_DIAB + 
                                 PREVAL_CVD + CURR_SMOKE +
-                                ALKI2_FR02 + HFC + Q57 + BMI)
+                                ALKI2_FR02 + HFC + Q57X + BMI)
 
+
+permanova <- mia::getPERMANOVA(tse, assay.type= "relabundance",
+                               formula = assay ~ BL_AGE + MEN + PREVAL_DIAB + 
+                                PREVAL_CVD + CURR_SMOKE +
+                                ALKI2_FR02 + HFC + Q57X + BMI )
 ```
 
 ```{r}
@@ -112,3 +116,36 @@ ANOVA model
 rda_info$permanova %>% 
   knitr::kable()
 ```
+```{r}
+tse <-  tse %>%  mia::agglomerateByRank(rank = "Species") %>% 
+  mia::transformAssay(method = "relabundance") %>%
+  mia::addRDA(assay.type = "relabundance",
+                 method = "bray",
+                 na.action = na.exclude,
+                 formula = assay ~ BL_AGE + MEN + PREVAL_DIAB + 
+                                PREVAL_CVD + CURR_SMOKE +
+                                ALKI2_FR02 + HFC + Q57X + BMI)
+
+rda_info <- attr(reducedDim(tse, "RDA"), "significance")
+
+library(miaViz)
+colData(tse)$BMI_Category <- cut(colData(tse)$BMI,
+                      breaks = c(-Inf, 18.5, 24.9, 29.9, 39.9, Inf),
+                      labels = c("Underweight (n=40)", "Normal (n=2137)", 
+                                 "Overweight (n=2401)", "Obese (n=1202)", 
+                                 "Morbid Obesity (n=66)"))
+rda_plot <- plotRDA(tse, "RDA", colour.by = "BMI_Category", add.vectors = FALSE)
+rda_info$permanova |>
+   knitr::kable()
+```
+```{r}
+plot(rda_plot)
+ggplot2::ggsave(filename = "RDA_BMI.pdf", 
+                plot = rda_plot,
+                #dpi = 300,
+                width = 10,
+                height = 8,
+                units = "in" )
+
+```
+

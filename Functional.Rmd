@@ -9,7 +9,6 @@ knitr::opts_chunk$set(warning = FALSE, message=FALSE)
 ```
 ```{r, echo = FALSE}
 library(magrittr)
-library(RNOmni)
 library(dplyr)
 library(readr)
 library(mia)
@@ -51,7 +50,7 @@ vars <- list(BL_AGE = "Age",
 
 #Importing metadata and cleaning up
 #needed to match SampleID and covariates
-tse <- readRDS("../data/tse_mgs-20241118_104759.rds") %>%
+tse <- readRDS("data/tse_mgs-20241118_104759.rds") %>%
   mia::transformAssay(assay.type = "counts", method = "relabundance") %>% 
   mia::addAlpha(assay.type = "counts", index = c("shannon", "observed"), name = c("shannon", "observed")) %>%
   tse_add_food_score(HFC) %>%
@@ -197,14 +196,14 @@ df <- dplyr::right_join(poo_dicho, east, by = "Barcode")
 ```{r}
 lm_full_bmi_partial <-  purrr::partial(lm,
                                   formula = BMI ~
-                                    term + BL_AGE + MEN +
+                                    scale(term) + BL_AGE + MEN +
                                     PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
                                     ALKI2_FR02 + HFC + Q57) %>%
                     purrr::possibly()
 
 lm_bmi_partial <-  purrr::partial(lm,
                                   formula = BMI ~
-                                    term + BL_AGE + MEN) %>%
+                                    scale(term) + BL_AGE + MEN) %>%
                     purrr::possibly()
 ```
 ```{r}
@@ -217,7 +216,7 @@ try%>%
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
@@ -230,7 +229,7 @@ sig <- try%>%
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
@@ -243,18 +242,19 @@ west <- as.data.frame(colData(tse2))%>%
 
 df <- dplyr::right_join(poo_dicho, west, by = "Barcode")
 
-try <- sig %>% 
+only_sig <- sig %>% 
   dplyr::mutate(results = purrr::map(Pathway, ~lm_full_bmi_partial(data = df %>% dplyr::rename(term=.x)), .progress = TRUE))
 
-try%>% 
+only_sig %>% 
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
   dplyr::mutate_if(is.numeric, ~round(.x, digits = 4)) %>%
+  #write.csv("function_dicho.csv")
   DT::datatable(caption = "Linear model for MetaCyc pathways - validation west, multivariable-adj")
 ```
 Tranform to inverse_rank
@@ -283,7 +283,7 @@ try%>%
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
@@ -299,7 +299,7 @@ sig <- try%>%
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
@@ -308,18 +308,19 @@ sig <- try%>%
 ```{r}
 ##Linear model for inverse rank
 #Take the column names from Pathway in shit dataframe as a list and mutate
-try <- sig %>%
+only_sig <- sig %>%
   dplyr::mutate(results = purrr::map(Pathway, ~lm_full_bmi_partial(data = df %>% dplyr::rename(term = .x)), .progress = TRUE))
 
-try%>% 
+only_sig %>% 
   dplyr::filter(!is.na(results)) %>%
   dplyr::mutate(results = purrr::map(results, ~broom::tidy(.x, conf.int = TRUE)))  %>%
   tidyr::unnest(results) %>%
-  dplyr::filter(term == "term") %>%
+  dplyr::filter(term == "scale(term)") %>%
   dplyr::mutate(qval_fdr = p.adjust(p.value, method = "BH")) %>%
   dplyr::arrange(p.value) %>%
   dplyr::filter(qval_fdr < 0.05) %>%
   dplyr::mutate_if(is.numeric, ~round(.x, digits = 4)) %>%
+  write.csv("functional-IRN.csv")
   DT::datatable(caption = "Linear model for Inverse Rank MetaCyc pathways - validation west, multi-adj")
 ```
 

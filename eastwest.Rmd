@@ -14,6 +14,7 @@ library(ANCOMBC)
 library(mia)
 library(ggplot2)
 library(dplyr)
+library(maaslin3)
 
 devtools::load_all()
 ```
@@ -43,7 +44,7 @@ vars <- list(BL_AGE = "Age",
              CURR_SMOKE = "Smoking",
              ALKI2_FR02 = "Alcohol consumption per week (g)",
              HFC = "Healthy food choices",
-             Q57 = "Exercise",
+             Q57X = "Exercise",
              shannon = "Shannon diversity",
              observed = "Observed richness",
              EAST = "Eastern finland",
@@ -51,16 +52,14 @@ vars <- list(BL_AGE = "Age",
 ```
 Read data in and filter for covariates
 ```{r}
-tse <- readRDS("../data/tse_mgs-20241118_104759.rds") %>%
+tse <- readRDS("./data/tse_mgs-20241118_104759.rds") %>%
   mia::transformAssay(assay.type = "counts", method = "relabundance") %>% 
   mia::addAlpha(assay.type = "counts", index = c("shannon", "observed"), name = c("shannon", "observed")) %>%
   tse_add_food_score(HFC) %>%
-  #combine values into one
-  tse_mutate(Q57 = dplyr::if_else(Q57 %in% c(3, 4), 3, Q57)) %>%
   tse_mutate(dplyr::across(c(MEN,
                              CURR_SMOKE,
                              EAST,
-                             Q57,
+                             Q57X,
                              dplyr::contains("INCIDENT"),
                              dplyr::contains("PREVAL")), as.factor)) %>% 
   #pregnant
@@ -71,7 +70,7 @@ tse <- readRDS("../data/tse_mgs-20241118_104759.rds") %>%
   tse_filter(dplyr::if_all(dplyr::one_of(names(vars)), not_na)) %>%
   #low reads
   tse_filter(total_reads > 50000) %>%
-  #filter for eastern finland
+  #filter for covariates
   tse_select(names(vars))
 
 #turn on east/west
@@ -87,6 +86,7 @@ tse1 <- tse %>%
 ```{r}
 tse %>%
   tse_meta(rownames = FALSE) %>%
+  #dplyr::mutate(MEN = factor(ifelse(MEN == 1, "MEN" , "WOMEN"))) %>%
   dplyr::mutate(EAST = factor(ifelse(EAST == 1, "Discovery east" , "Validation west"))) %>%
   mytableone(vars,fo =  ~ .| EAST ) 
 ```
@@ -97,7 +97,7 @@ lm_bmi_partial <-  purrr::partial(lm,
                                   formula = scale(BMI) ~
                                     scale(term) + BL_AGE + MEN +
                                     PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57)
+                                    ALKI2_FR02 + HFC + Q57X)
 ```
 ```{r}
 lm_bmi_model_for_taxon <- function(df, term, rank = NULL) {
@@ -107,29 +107,13 @@ lm_bmi_model_for_taxon <- function(df, term, rank = NULL) {
     lm_bmi_partial(data = .)
 }
 ```
-Waist circ. model + covariates
-```{r}
-lm_waist_partial <-  purrr::partial(lm,
-                                  formula = scale(VYOTARO) ~
-                                    scale(term) + BL_AGE + MEN +
-                                    PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57)
-```
-```{r}
-lm_waist_model_for_taxon <- function(df, term, rank = NULL) {
-  message(term)
-  { if (is.null(rank)) df else df[[rank]] } %>%
-    dplyr::rename(term := {{term}}) %>% 
-    lm_waist_partial(data = .)
-}
-```
 WHR model + covariates
 ```{r}
 lm_whr_partial <-  purrr::partial(lm,
                                   formula = scale(WHR) ~
                                     scale(term) + BL_AGE + MEN +
                                     PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57)
+                                    ALKI2_FR02 + HFC + Q57X)
 ```
 ```{r}
 lm_whr_model_for_taxon <- function(df, term, rank = NULL) {
@@ -145,8 +129,8 @@ BMI
 ```{r}
 tse %>%
   tse_meta(rownames = FALSE) %>% 
-  lm(scale(BMI) ~ scale(shannon) + BL_AGE + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57, data = .) %>% 
+  lm(scale(BMI) ~ scale(shannon) + scale(BL_AGE) + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
+                                    scale(ALKI2_FR02) + scale(HFC) + Q57X, data = .) %>% 
   broom::tidy(conf.int = TRUE) %>%
   round_numeric_columns() %>% 
   DT::datatable(caption = "Alpha diversity to BMI")
@@ -155,39 +139,30 @@ tse %>%
 #observed richness
 tse %>%
   tse_meta(rownames = FALSE) %>% 
-  lm(scale(BMI) ~ scale(observed) + BL_AGE + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57, data = .) %>% 
+  lm(scale(BMI) ~ scale(observed) + scale(BL_AGE) + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
+                                    scale(ALKI2_FR02) + scale(HFC) + Q57X, data = .) %>% 
   broom::tidy(conf.int = TRUE) %>%
   round_numeric_columns() %>% 
   DT::datatable(caption = "Alpha diversity to BMI")
-```
-Waist circumference
-```{r}
-tse %>%
-  tse_meta(rownames = FALSE) %>% 
-  lm(scale(VYOTARO) ~ scale(shannon) + BL_AGE + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57, data = .) %>% 
-  broom::tidy(conf.int = TRUE) %>%
-  round_numeric_columns() %>% 
-  DT::datatable(caption = "Alpha diversity to Vyot")
-```
-```{r}
-tse %>%
-  tse_meta(rownames = FALSE) %>% 
-  lm(scale(VYOTARO) ~ scale(observed) + BL_AGE + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57, data = .) %>% 
-  broom::tidy(conf.int = TRUE) %>%
-  round_numeric_columns() %>% 
-  DT::datatable(caption = "Alpha diversity to Vyot")
 ```
 Hip to waist ratio
 ```{r}
 tse %>%
   tse_meta(rownames = FALSE) %>% 
-  lm(scale(WHR) ~ scale(shannon) + BL_AGE + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
-                                    ALKI2_FR02 + HFC + Q57, data = .) %>% 
+  lm(scale(WHR) ~ scale(shannon) + scale(BL_AGE) + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
+                                    scale(ALKI2_FR02) + scale(HFC) + Q57X, data = .) %>% 
   broom::tidy(conf.int = TRUE) %>%
   round_numeric_columns() %>% 
+  DT::datatable(caption = "Alpha diversity to WHR")
+```
+```{r}
+tse %>%
+  tse_meta(rownames = FALSE) %>% 
+  lm(scale(WHR) ~ scale(observed) + scale(BL_AGE) + MEN + PREVAL_DIAB + PREVAL_CVD + CURR_SMOKE +
+                                    scale(ALKI2_FR02) + scale(HFC) + Q57X, data = .) %>% 
+  broom::tidy(conf.int = TRUE) %>%
+  round_numeric_columns() %>% 
+  write.csv("alpha-whr-rich.csv")
   DT::datatable(caption = "Alpha diversity to WHR")
 ```
 #Common taxa
@@ -296,52 +271,6 @@ df_lm_whr_results %>%
   dplyr::arrange(qval_fdr) %>% 
   #dplyr::filter(qval_fdr < 0.05) %>%
   DT::datatable(caption = "Linear model for Waist Hip ratio")
-```
-Top 15 significant taxa
-```{r}
-whr<- df_lm_whr_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:15) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("WHR", 15))
-
-bmi <- df_lm_bmi_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:15) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("BMI", 15))
-
-waist <- df_lm_waist_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:15) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("waist", 15))
-
-hi1 <- rbind(whr, bmi, waist)
-
-#define colors
-my_colors <- c("BMI" = "darkgreen", "waist" = "darkolivegreen2", 
-               "WHR" = "pink1")
-
-q <- ggplot(data=hi1, aes(x=taxa, y=estimate, fill = Origin)) +
-  geom_bar(stat="identity", position = 'dodge') +
-  scale_fill_manual(values=my_colors) +
-  coord_flip() +
-  theme_classic() +
-  theme(axis.text.y = element_text(face = 'italic'))
-q
 ```
 Command line arguments
 ```{r}
@@ -623,52 +552,4 @@ df_lm_whr_results %>%
   dplyr::arrange(qval_fdr) %>% 
   #dplyr::filter(qval_fdr < 0.05) %>%
   DT::datatable(caption = "Linear model for Waist Hip ratio")
-```
-Top 15 significant taxa
-```{r}
-whr<- df_lm_whr_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:20) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("WHR", 20))
-
-bmi <- df_lm_bmi_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:20) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("BMI", 20))
-
-waist <- df_lm_waist_results %>%
-  dplyr::arrange(qval_fdr) %>%
-  dplyr::slice(1:20) %>%
-  dplyr::select(taxa,estimate,conf.low, conf.high, p.value, qval_fdr) %>%
-  dplyr::mutate(across(everything(),~ gsub("GUT_","", .))) %>%
-  dplyr::mutate_at(c(2:6), as.numeric) %>%
-  dplyr::mutate_at(c(2:4),round,3) %>%
-  dplyr::mutate_at(c(5:6), round, 3) %>%
-  dplyr::mutate(Origin = rep("waist", 20))
-
-hi <- rbind(whr, bmi, waist)
-
-#define colors
-my_colors <- c("BMI" = "darkgreen", "waist" = "darkolivegreen2", 
-               "WHR" = "orange")
-
-bb <- ggplot(data=hi, aes(x=taxa, y=estimate, fill = Origin)) +
-  geom_bar(stat="identity", position = 'dodge') +
-  scale_fill_manual(values=my_colors) +
-  coord_flip() +
-  theme_classic() +
-  theme(axis.text.y = element_text(face = 'italic'),
-        theme(text=element_text(size=14))) 
-  
-bb
 ```
