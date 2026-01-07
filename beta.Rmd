@@ -135,6 +135,7 @@ colData(tse)$BMI_Category <- cut(colData(tse)$BMI,
                                  "Overweight (n=2401)", "Obese (n=1202)", 
                                  "Morbid Obesity (n=66)"))
 rda_plot <- plotRDA(tse, "RDA", colour.by = "BMI_Category", add.vectors = FALSE)
+my_colors <- c("#d4a1a1", "#FFCC00", "#FF9900",  "#990000", "black")
 rda_plot <- rda_plot + scale_color_manual(values = my_colors)
 plot(rda_plot)
 ggplot2::ggsave(filename = "RDA_BMI_1.pdf", 

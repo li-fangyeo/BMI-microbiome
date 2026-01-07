@@ -16,8 +16,7 @@ a<- tse %>% colData() %>% as.data.frame()
 a$BMI_cat <- cut(a$BMI,
                  breaks = c(-Inf, 18.5, 25, 30, 40, Inf),
                  labels = c("Underweight", "Normal", "Overweight", "Obese", "Morbid Obesity"))
-my_colors <- c("#ffeb92", "#ceb16f", "#9d784b", "#6b3e28", "black")
-my_colors <- c("#f5d6d6", "#d4a1a1", "#b46c6c", "#933737", "black")
+
 my_colors <- c("#d4a1a1", "#FFCC00", "#FF9900",  "#990000", "black")
 p<-ggplot(a, aes(x = BMI, y = shannon, colour = BMI_Category)) +
   geom_point() +
