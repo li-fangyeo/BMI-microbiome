@@ -4,24 +4,34 @@ library(purrr)
 library(ggsignif)
 library(mia)
 
-
-
-#Categorise BMI
+#Alpha as continuous
+#Scatterplot
 colData(tse)$BMI_Category <- cut(colData(tse)$BMI,
-                      breaks = c(-Inf, 18.5, 24.9, 29.9, 39.9, Inf),
-                      labels = c("Underweight (n=40)", "Normal (n=2137)", 
-                                 "Overweight (n=2401)", "Obese (n=1202)", 
-                                 "Morbid Obesity (n=66)"))
-
-#Box plot for alpha 
+                                 breaks = c(-Inf, 18.5, 24.9, 29.9, 39.9, Inf),
+                                 labels = c("Underweight (n=40)", "Normal (n=2137)", 
+                                            "Overweight (n=2401)", "Obese (n=1202)", 
+                                            "Morbid Obesity (n=66)"))
 a<- tse %>% colData() %>% as.data.frame()
 
-a %>% as.data.frame %>% group_by(BMI_Category) %>%
-  summarise(Count = n())
-a$BMI_Category <- factor(a$BMI_Category, 
-                         levels = c("Underweight (n=40)", "Normal (n=2137)", 
-                                    "Overweight (n=2401)", "Obese (n=1202)", 
-                                    "Morbid Obesity (n=66)"))
+a$BMI_cat <- cut(a$BMI,
+                 breaks = c(-Inf, 18.5, 25, 30, 40, Inf),
+                 labels = c("Underweight", "Normal", "Overweight", "Obese", "Morbid Obesity"))
+my_colors <- c("#ffeb92", "#ceb16f", "#9d784b", "#6b3e28", "black")
+my_colors <- c("#f5d6d6", "#d4a1a1", "#b46c6c", "#933737", "black")
+my_colors <- c("#d4a1a1", "#FFCC00", "#FF9900",  "#990000", "black")
+p<-ggplot(a, aes(x = BMI, y = shannon, colour = BMI_Category)) +
+  geom_point() +
+  theme_classic() +
+  scale_colour_manual(values = my_colors)
+p
+
+ggsave("alpha.pdf", 
+       plot = p, 
+       width = 8, 
+       height = 6, 
+       units = "in")
+
+#Violin plot
 # For significance testing, all different combinations are determined
 comb <- split(t(combn(levels(a$BMI_Category), 2)), 
               seq(nrow(t(combn(levels(a$BMI_Category), 2)))))
@@ -35,7 +45,8 @@ pvals_adj <- p.adjust(pvals, method = "fdr")
 # Filter only significant comparisons
 significant_comparisons <- comb[pvals_adj < 0.05]
 
-my_colors <- c("#ffffff", "#c2c6cb", "#868c96", "#495362", "#0c192d")
+my_colors <- c("lightgrey", "#c2c6cb", "#868c96", "#495362", "#0c192d")
+
 
 # Plot with only significant annotations
 p<- ggplot(a, aes(x = BMI_Category, y = shannon, fill = BMI_Category)) +
@@ -55,16 +66,12 @@ p<- ggplot(a, aes(x = BMI_Category, y = shannon, fill = BMI_Category)) +
         text = element_text(color = "black"))
   
 
-p
-
-ggsave("alpha.pdf", 
-       plot = p, 
-       width = 8, 
-       height = 7, 
-       units = "in")
 
 library(DataExplorer)
 plot_intro(a)
 plot_bar(a)
 plot_histogram(a)
 plot_correlation(na.omit(a), maxcat = 5L)
+
+
+  
