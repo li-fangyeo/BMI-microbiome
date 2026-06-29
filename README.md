@@ -7,6 +7,7 @@ Using eastern finland as discovery cohort, validating significant taxa in wester
 3) Bacteroidota:Firmicutes ratio
 4) Taxa differential abundance analysis
 5) Predicted pathway analysis
+6) External validation
 
 ## Code files
 1. MainAnalysis.rmd
@@ -14,9 +15,10 @@ Using eastern finland as discovery cohort, validating significant taxa in wester
 3. Functional.rmd
 4. BF_ratio.R
 5. Figures
+6. FR07.rmd
 
 ## Getting started
-- Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts. 
+- Cohort: FINRISK 2002 cohort were split into east (discovery) and west (validation) cohorts; FINRISK 2007 cohort was used to externally validate taxa and pathways significant in western FR02 cohort. 
 - Exposure variable: gut microbiota abundances
 - Outcome variable: Obesity indicators (namely BMI, WHR)
 - Covariate: diabetes, cardiovascular disease, smoking, alcohol consumption per week, healthy food choices, exercise
@@ -44,6 +46,10 @@ No. of significant taxa after FDR correction:
 | WHR       | 149       | 105        |
 
 -Note: Waist circumference was later removed from analysis because it did not add much insight.
+
+### External validation cohort
+External validation cohort, n = 275
+Microbiota abundance table was filtered to only keep significant taxa validated in the Western Finland cohort.
 
 
 
