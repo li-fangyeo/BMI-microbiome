@@ -7,6 +7,7 @@ library(dplyr)
 library(scales)
 df_lm_bmi_results <- read.table("df_lm_bmi.tsv", sep = "\t")
 df_lm_whr_results <- read.table("df_lm_whr.tsv", sep = "\t")
+df_FR07 <- read.csv("df_lm_bmi_FR07_p.csv", sep = ",")
 
 #getting significant taxa, after validation in west cohort
 bmi<- df_lm_bmi_results %>%
@@ -19,19 +20,26 @@ whr <- df_lm_whr_results %>%
   dplyr::filter(qval_fdr < 0.05)
 #DT::datatable(caption = "Linear model for whr")
 
+FR07 <- df_FR07 %>%
+  dplyr::arrange(p.value)
+
 #joining them into a dataframe
 a<- whr%>% select(taxa, estimate, qval_fdr)
 b<- bmi %>% select(taxa, estimate, qval_fdr)
-e<- full_join(a,b, by = "taxa",suffix = c(".whr",".bmi"))
+
+a<- FR07 %>% select(taxa, estimate, p.value)
+
+#edit suffix
+e<- dplyr::full_join(a,b, by = "taxa",suffix = c("07",".bmi"))
 
 #tidying and renaming the columns
 colnames(e)[2] <- "WHR"
-colnames(e)[3] <- "BMI"
+colnames(e)[4] <- "BMI"
 colnames(e)[1] <- "Species"
 e <- as.data.frame(e)
 e$Species <- gsub("GUT_", "",x=e$Species) 
 e <- e%>% replace(is.na(.), 0) %>% arrange(Species)
-
+metadata <- as.data.frame(rowData(tse))
 e <- merge(e, metadata[, c("Species", "Phylum")], by = "Species")
 e <- merge(e, metadata[, c("Species", "Family")], by = "Species")
 e<- e %>% unique() %>% as.data.frame 
@@ -69,7 +77,13 @@ p <- ggtree(tree, layout = "fan", open.angle = 20)
 p <- rotate_tree(p, 130)
 ##Different colour
 levels_family <- unique(f$Family2)
-palette_named <- setNames(colorBlindness::SteppedSequential5Steps[1:length(levels_family)], levels_family)
+
+#colour palette selection. CHOOSE ONE!
+#palette_named <- setNames(colorBlindness::SteppedSequential5Steps[1:length(levels_family)], levels_family)
+cols <- paletteer::paletteer_d("ggthemes::Tableau_20")[1:14]
+
+ f<- f %>%
+  dplyr::arrange(Phylum)
 
 q <- p + geom_fruit(
   data = f,
@@ -104,13 +118,13 @@ q <- q +
     offset = 0.2,
     axis.params = list(title = "BMI", title.position = "top")
   ) +
-  scale_fill_manual(values = palette_named) + 
+  scale_fill_manual(values = cols) + 
   theme(legend.position = "right") +
   geom_vline(xintercept = 0.9, color = "grey50", linetype = "solid", size = 0.4) +  # WHR
   geom_vline(xintercept = 1.14, color = "grey50", linetype = "solid", size = 0.4)
 
 q
-ggsave("beautifulcircle.pdf", 
+ggsave("beautifulcircle1.pdf", 
        q,
        width = 15,
        height = 10,
